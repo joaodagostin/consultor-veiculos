@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 const API_BASE = "https://parallelum.com.br/fipe/api/v2";
+const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMTQzMjQ0NS1lOGZkLTQ2YzgtODA0Yy0xOWI3MDU3OTNmZWQiLCJlbWFpbCI6ImpvYW8uNDAzMTE0QGFsdW5vc2F0Yy5lZHUuYnIiLCJpYXQiOjE3NzM3MDE0NjZ9.V_IFeJRe2O4keiI0KMSeh-T1di5_o9CFdY-62u5eLpo";
 
 type VehicleType = "cars" | "motorcycles" | "trucks";
 
@@ -23,7 +24,7 @@ type FipeOption = {
 type FipeResponse = {
   brand: string;
   model: string;
-  year: number;
+  modelYear: number;
   fuel: string;
   price: string;
   fipeCode: string;
@@ -41,6 +42,7 @@ type InfoProps = {
   value: string;
   destaque?: boolean;
   icon?: ReactNode;
+  style?: React.CSSProperties;
 };
 
 const vehicleTypeOptions: {
@@ -113,6 +115,7 @@ export default function App() {
     const response = await fetch(url, {
       headers: {
         Accept: "application/json",
+		Authorization: `Bearer ${TOKEN}`,
       },
     });
 
@@ -216,42 +219,13 @@ export default function App() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.20),transparent_30%),radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_25%),radial-gradient(circle_at_bottom,rgba(168,85,247,0.12),transparent_30%)]" />
 
         <div className="relative mx-auto w-full max-w-[1650px] px-3 py-3 sm:px-4 lg:px-5">
-          <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
             <section className="rounded-[26px] border border-white/10 bg-white/8 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-5">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="max-w-3xl">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-200">
-                      <Sparkles className="h-4 w-4" />
-                      Consulta elegante da Tabela FIPE
-                    </div>
-
+                  <div className="" style={{margin: '0 7vw 0 0'}}>
                     <h1 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-4xl">
                       Descubra o valor FIPE do veículo sem complicação
                     </h1>
-
-                    <p className="mt-2 max-w-2xl text-sm leading-5 text-slate-300">
-                      Escolha o tipo, a marca, o modelo e o ano. A aplicação
-                      carrega os dados em sequência e exibe o resultado final com
-                      um visual mais limpo e melhor aproveitamento de tela.
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-3 text-sm text-slate-300 shadow-lg">
-                    <div className="text-slate-400">Categoria ativa</div>
-                    <div className="mt-2 flex items-center gap-3 text-white">
-                      <div className="rounded-2xl bg-white/10 p-2.5">
-                        {selectedVehicle?.icon}
-                      </div>
-                      <div>
-                        <div className="font-semibold">
-                          {selectedVehicle?.label}
-                        </div>
-                        <div className="text-xs text-slate-400">
-                          {selectedVehicle?.subtitle}
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -393,47 +367,7 @@ export default function App() {
                 )}
               </div>
             </section>
-
-            <aside className="grid gap-4">
-              <div className="rounded-[26px] border border-white/10 bg-white/8 p-4 shadow-2xl shadow-black/20 backdrop-blur-xl">
-                <div className="text-sm text-slate-400">Fluxo da consulta</div>
-                <div className="mt-3 space-y-3">
-                  <StepItem
-                    index="01"
-                    title="Escolha a categoria"
-                    description="Carro, moto ou caminhão."
-                    done
-                  />
-                  <StepItem
-                    index="02"
-                    title="Selecione a marca"
-                    description="A lista vem direto da API."
-                    done={!!brandId}
-                  />
-                  <StepItem
-                    index="03"
-                    title="Selecione o modelo"
-                    description="Os modelos dependem da marca."
-                    done={!!modelId}
-                  />
-                  <StepItem
-                    index="04"
-                    title="Selecione o ano"
-                    description="Inclui o tipo de combustível."
-                    done={!!yearId}
-                  />
-                </div>
-              </div>
-
-              <div className="rounded-[26px] border border-white/10 bg-gradient-to-br from-slate-900 to-slate-800 p-4 shadow-2xl shadow-black/20">
-                <div className="text-sm text-slate-400">Dica</div>
-                <p className="mt-2 text-sm leading-5 text-slate-200">
-                  Esse layout usa Tailwind e ícones do{" "}
-                  <span className="font-semibold text-white">lucide-react</span>.
-                </p>
-              </div>
-            </aside>
-          </div>
+          
 
           {data && (
             <section className="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
@@ -463,62 +397,33 @@ export default function App() {
                     label="Marca"
                     value={data.brand}
                     icon={<Car className="h-4 w-4" />}
-                  />
-                  <Info
-                    label="Modelo"
-                    value={data.model}
-                    icon={<Sparkles className="h-4 w-4" />}
+					style={{}}
                   />
                   <Info
                     label="Ano"
-                    value={String(data.year)}
+                    value={String(data.modelYear)}
                     icon={<CalendarDays className="h-4 w-4" />}
+					style={{}}
+                  />
+				  <Info
+                    label="Referência"
+                    value={data.referenceMonth}
+                    icon={<CalendarDays className="h-4 w-4" />}
+					style={{}}
                   />
                   <Info
                     label="Combustível"
                     value={data.fuel}
                     icon={<Fuel className="h-4 w-4" />}
+					style={{}}
                   />
-                  <Info
-                    label="Código FIPE"
-                    value={data.fipeCode}
-                    icon={<BadgeDollarSign className="h-4 w-4" />}
-                  />
-                  <Info
-                    label="Referência"
-                    value={data.referenceMonth}
-                    icon={<CalendarDays className="h-4 w-4" />}
-                  />
-                  <Info
-                    label="Tipo veículo"
-                    value={selectedVehicle?.label || String(data.vehicleType)}
-                    icon={selectedVehicle?.icon}
-                  />
-                  <Info
-                    label="Valor"
-                    value={data.price}
-                    destaque
-                    icon={<BadgeDollarSign className="h-4 w-4" />}
+				  <Info
+                    label="Modelo"
+                    value={data.model}
+                    icon={<Sparkles className="h-4 w-4" />}
+					style={{ width: '53vw', textAlign: 'left' }}
                   />
                 </div>
-              </div>
-
-              <div className="rounded-[26px] border border-white/10 bg-slate-900/90 p-4 shadow-2xl shadow-black/20">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm text-slate-400">Debug</div>
-                    <h3 className="text-lg font-semibold text-white">
-                      JSON retornado
-                    </h3>
-                  </div>
-                  <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-slate-300">
-                    API Response
-                  </div>
-                </div>
-
-                <pre className="mt-4 max-h-[300px] overflow-auto rounded-3xl border border-white/10 bg-black/30 p-4 text-sm leading-6 text-cyan-100">
-                  {JSON.stringify(data, null, 2)}
-                </pre>
               </div>
             </section>
           )}
@@ -537,9 +442,9 @@ function Field({ label, children }: FieldProps) {
   );
 }
 
-function Info({ label, value, destaque = false, icon }: InfoProps) {
+function Info({ label, value, destaque = false, icon, style }: InfoProps) {
   return (
-    <div
+    <div style={style}
       className={`rounded-2xl border p-3 shadow-lg transition ${
         destaque
           ? "border-emerald-400/20 bg-emerald-400/10"
