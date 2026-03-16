@@ -397,25 +397,21 @@ export default function App() {
                     label="Marca"
                     value={data.brand}
                     icon={<Car className="h-4 w-4" />}
-					style={{}}
                   />
                   <Info
                     label="Ano"
                     value={String(data.modelYear)}
                     icon={<CalendarDays className="h-4 w-4" />}
-					style={{}}
                   />
 				  <Info
                     label="Referência"
                     value={data.referenceMonth}
                     icon={<CalendarDays className="h-4 w-4" />}
-					style={{}}
                   />
                   <Info
                     label="Combustível"
                     value={data.fuel}
                     icon={<Fuel className="h-4 w-4" />}
-					style={{}}
                   />
 				  <Info
                     label="Modelo"
