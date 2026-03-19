@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import {
   Car,
@@ -8,11 +8,10 @@ import {
   Sparkles,
   CalendarDays,
   Fuel,
-  BadgeDollarSign,
 } from "lucide-react";
 
 const API_BASE = "https://parallelum.com.br/fipe/api/v2";
-const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMTQzMjQ0NS1lOGZkLTQ2YzgtODA0Yy0xOWI3MDU3OTNmZWQiLCJlbWFpbCI6ImpvYW8uNDAzMTE0QGFsdW5vc2F0Yy5lZHUuYnIiLCJpYXQiOjE3NzM3MDE0NjZ9.V_IFeJRe2O4keiI0KMSeh-T1di5_o9CFdY-62u5eLpo";
+const TOKEN = import.meta.env.VITE_API_TOKEN;
 
 type VehicleType = "cars" | "motorcycles" | "trucks";
 
@@ -105,11 +104,6 @@ export default function App() {
       carregarAnos(brandId, modelId);
     }
   }, [brandId, modelId]);
-
-  const selectedVehicle = useMemo(
-    () => vehicleTypeOptions.find((item) => item.value === vehicleType),
-    [vehicleType]
-  );
 
   async function requestJson<T>(url: string): Promise<T> {
     const response = await fetch(url, {
@@ -459,34 +453,6 @@ function Info({ label, value, destaque = false, icon, style }: InfoProps) {
         }`}
       >
         {value || "-"}
-      </div>
-    </div>
-  );
-}
-
-function StepItem({
-  index,
-  title,
-  description,
-  done,
-}: {
-  index: string;
-  title: string;
-  description: string;
-  done?: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
-      <div
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl text-sm font-semibold ${
-          done ? "bg-emerald-400/20 text-emerald-200" : "bg-white/10 text-slate-300"
-        }`}
-      >
-        {index}
-      </div>
-      <div>
-        <div className="font-medium text-white">{title}</div>
-        <div className="mt-1 text-sm text-slate-400">{description}</div>
       </div>
     </div>
   );
