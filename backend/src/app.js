@@ -6,9 +6,20 @@ import fipeRoutes from "./routes/fipe.routes.js";
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://consultor-veiculos.vercel.app",
+];
+
 app.use(
   cors({
-    origin: env.frontendUrl,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Origin não permitida pelo CORS"));
+    },
+    credentials: true,
   })
 );
 
