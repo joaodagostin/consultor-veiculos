@@ -1,0 +1,16 @@
+{
+  "name": "mvp-consulta-veiculo-backend",
+  "version": "1.0.0",
+  "description": "Backend MVP para consulta inteligente de veículos",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0"
+  }
+}
