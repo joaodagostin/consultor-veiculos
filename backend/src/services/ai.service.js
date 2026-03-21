@@ -10,6 +10,19 @@ const client = env.geminiApiKey
     })
   : null;
 
+function getClassificacaoTexto(score) {
+  if (score >= 80) return "Boa compra";
+  if (score >= 60) return "Atenção";
+  return "Risco alto";
+}
+
+function getPrecoSugerido(precoFipe, percentualDiferenca) {
+  if (percentualDiferenca >= 15) return precoFipe * 0.9;
+  if (percentualDiferenca >= 8) return precoFipe * 0.95;
+  if (percentualDiferenca <= -20) return precoFipe * 0.92;
+  return precoFipe * 0.97;
+}
+
 function buildFallbackAnalysis({
   marca,
   modelo,
@@ -19,42 +32,59 @@ function buildFallbackAnalysis({
   km,
   percentualDiferenca,
   score,
+  oportunidade,
 }) {
-  const partes = [];
+  const classificacao = getClassificacaoTexto(score);
+  const precoSugerido = getPrecoSugerido(precoFipe, percentualDiferenca);
 
-  partes.push(
-    `O veículo ${marca} ${modelo} ${ano} recebeu classificação ${getScoreDisplay(score)}.`
-  );
+  const pontosPositivos = [];
+  const pontosAtencao = [];
 
-  partes.push(
-    `O preço informado foi ${formatCurrency(preco)}, enquanto a referência FIPE considerada foi ${formatCurrency(precoFipe)}.`
-  );
+  if (percentualDiferenca <= -5) {
+    pontosPositivos.push("Preço abaixo da FIPE");
+  } else if (percentualDiferenca < 8) {
+    pontosPositivos.push("Preço relativamente alinhado com a FIPE");
+  }
 
-  if (percentualDiferenca <= -15) {
-    partes.push(
-      `O valor está bem abaixo da FIPE, o que pode indicar oportunidade, mas também exige atenção com histórico, procedência e estado geral.`
-    );
-  } else if (percentualDiferenca >= 10) {
-    partes.push(
-      `O valor está acima da FIPE, então vale avaliar com cuidado se o estado do carro realmente justifica o sobrepreço.`
-    );
-  } else {
-    partes.push(
-      `O valor está relativamente alinhado com a FIPE, o que tende a indicar uma faixa de mercado mais previsível.`
-    );
+  if (score >= 80) {
+    pontosPositivos.push("Indicadores gerais favoráveis para negociação");
+  }
+
+  if (percentualDiferenca >= 10) {
+    pontosAtencao.push("Preço acima da FIPE");
+  }
+
+  if (percentualDiferenca <= -20) {
+    pontosAtencao.push("Preço muito abaixo da FIPE, exigindo conferência redobrada");
   }
 
   if (typeof km === "number" && km > 0) {
-    partes.push(
-      `A quilometragem informada foi de ${km.toLocaleString("pt-BR")} km, e ela precisa ser interpretada junto com o ano e o estado de conservação.`
-    );
+    pontosPositivos.push(`Quilometragem informada: ${km.toLocaleString("pt-BR")} km`);
+  } else {
+    pontosAtencao.push("Quilometragem não informada");
   }
 
-  partes.push(
-    `Antes de comprar, vale conferir documentação, sinais de colisão, desgaste mecânico, pneus, pintura e, se possível, fazer vistoria cautelar.`
-  );
+  if (oportunidade === "suspeito") {
+    pontosAtencao.push("Diferença de preço pode indicar anúncio de risco");
+  } else if (oportunidade === "oportunidade") {
+    pontosPositivos.push("Pode representar boa oportunidade se o estado geral estiver coerente");
+  }
 
-  return partes.join(" ");
+  if (pontosPositivos.length === 0) {
+    pontosPositivos.push("Modelo deve ser avaliado presencialmente antes da decisão");
+  }
+
+  if (pontosAtencao.length === 0) {
+    pontosAtencao.push("Confirmar histórico, documentação e estado mecânico");
+  }
+
+  return [
+    `Classificação: ${classificacao}`,
+    `Resumo: O ${marca} ${modelo} ${ano} foi avaliado como ${classificacao.toLowerCase()}, com anúncio em ${formatCurrency(preco)} frente à FIPE de ${formatCurrency(precoFipe)}.`,
+    `Pontos positivos: ${pontosPositivos.join("; ")}.`,
+    `Pontos de atenção: ${pontosAtencao.join("; ")}.`,
+    `Recomendação: tente negociar por cerca de ${formatCurrency(precoSugerido)} e só avance após conferir documentação, sinais de colisão, mecânica, pneus, pintura e, se possível, fazer vistoria cautelar.`,
+  ].join(" ");
 }
 
 export async function generateVehicleNarrative({
@@ -67,6 +97,7 @@ export async function generateVehicleNarrative({
   percentualDiferenca,
   score,
   combustivel,
+  oportunidade = "normal",
 }) {
   if (!client) {
     return buildFallbackAnalysis({
@@ -78,13 +109,16 @@ export async function generateVehicleNarrative({
       km,
       percentualDiferenca,
       score,
+      oportunidade,
     });
   }
+
+  const precoSugerido = getPrecoSugerido(precoFipe, percentualDiferenca);
 
   const prompt = `
 Você é um especialista em compra de veículos usados no Brasil.
 
-Analise os dados abaixo e escreva uma avaliação curta, clara e útil para um comprador comum.
+Sua função é analisar se um carro parece ser uma boa compra com base em preço, FIPE, quilometragem, idade e risco percebido do anúncio.
 
 Dados do veículo:
 - Marca: ${marca}
@@ -93,23 +127,30 @@ Dados do veículo:
 - Combustível: ${combustivel || "Não informado"}
 - Preço do anúncio: ${formatCurrency(preco)}
 - Preço de referência FIPE: ${formatCurrency(precoFipe)}
-- Diferença percentual para FIPE: ${percentualDiferenca.toFixed(2)}%
+- Diferença para FIPE: ${percentualDiferenca.toFixed(2)}%
 - Quilometragem: ${typeof km === "number" ? `${km.toLocaleString("pt-BR")} km` : "Não informada"}
 - Score calculado: ${score}/100 (${getScoreDisplay(score)})
+- Situação detectada: ${oportunidade}
+- Faixa sugerida para negociação: ${formatCurrency(precoSugerido)}
 
-Escreva em português do Brasil.
+Responda em português do Brasil.
 
-Objetivo:
-- Dizer se parece uma boa compra, compra de atenção, ou compra arriscada
-- Explicar o que chama atenção no preço
-- Explicar riscos possíveis
-- Dizer o que a pessoa deve verificar antes de fechar negócio
+Siga EXATAMENTE este formato:
+Classificação: [Boa compra | Atenção | Risco alto]
+Resumo: [1 frase direta]
+Pontos positivos: [itens separados por ponto e vírgula]
+Pontos de atenção: [itens separados por ponto e vírgula]
+Recomendação: [orientação objetiva para o comprador]
 
 Regras:
-- Seja objetivo
-- Não invente histórico que não foi informado
+- Seja direto e útil para um comprador comum
+- Não invente histórico ou defeitos não informados
+- Considere que preço muito abaixo da FIPE pode ser oportunidade, mas também pode indicar risco
+- Se o preço estiver acima da FIPE, diga que a negociação precisa ser mais dura
+- Sugira cautela com documentação, histórico, vistoria cautelar e estado mecânico
 - Não use markdown
-- Responda em no máximo 6 frases
+- Não use asteriscos
+- Máximo de 6 frases
 `.trim();
 
   try {
@@ -121,7 +162,7 @@ Regras:
           content: prompt,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.5,
     });
 
     const text = response.choices?.[0]?.message?.content?.trim();
@@ -143,6 +184,7 @@ Regras:
       km,
       percentualDiferenca,
       score,
+      oportunidade,
     });
   }
 }
