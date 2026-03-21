@@ -1,71 +1,148 @@
+import OpenAI from "openai";
+import { env } from "../config/env.js";
 import { formatCurrency } from "../utils/format.js";
 import { getScoreDisplay } from "../utils/score.js";
 
-export async function generateVehicleNarrative({
-  placa,
+const client = env.geminiApiKey
+  ? new OpenAI({
+      apiKey: env.geminiApiKey,
+      baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+    })
+  : null;
+
+function buildFallbackAnalysis({
   marca,
   modelo,
-  anoModelo,
+  ano,
+  preco,
   precoFipe,
-  precoAnuncio,
-  qtdDonos,
-  possuiHistoricoRestritivo,
+  km,
   percentualDiferenca,
   score,
 }) {
   const partes = [];
 
   partes.push(
-    `O veículo ${marca} ${modelo} ${anoModelo}, placa ${placa}, recebeu classificação ${getScoreDisplay(score)}.`
+    `O veículo ${marca} ${modelo} ${ano} recebeu classificação ${getScoreDisplay(score)}.`
   );
 
-  if (typeof precoAnuncio === "number") {
-    if (percentualDiferenca !== null && percentualDiferenca <= -15) {
-      partes.push(
-        `O preço anunciado (${formatCurrency(precoAnuncio)}) está bem abaixo da FIPE (${formatCurrency(precoFipe)}), o que pode representar oportunidade, mas também exige investigação cuidadosa antes da compra.`
-      );
-    } else if (percentualDiferenca !== null && percentualDiferenca >= 10) {
-      partes.push(
-        `O preço anunciado (${formatCurrency(precoAnuncio)}) está acima da FIPE (${formatCurrency(precoFipe)}), então pode haver sobrepreço dependendo do estado real do veículo e dos opcionais.`
-      );
-    } else {
-      partes.push(
-        `O preço anunciado (${formatCurrency(precoAnuncio)}) está em faixa próxima da FIPE (${formatCurrency(precoFipe)}), o que reduz suspeitas relacionadas a preço fora do padrão.`
-      );
-    }
+  partes.push(
+    `O preço informado foi ${formatCurrency(preco)}, enquanto a referência FIPE considerada foi ${formatCurrency(precoFipe)}.`
+  );
+
+  if (percentualDiferenca <= -15) {
+    partes.push(
+      `O valor está bem abaixo da FIPE, o que pode indicar oportunidade, mas também exige atenção com histórico, procedência e estado geral.`
+    );
+  } else if (percentualDiferenca >= 10) {
+    partes.push(
+      `O valor está acima da FIPE, então vale avaliar com cuidado se o estado do carro realmente justifica o sobrepreço.`
+    );
   } else {
     partes.push(
-      `Como o preço do anúncio não foi informado, a análise ficou mais focada em perfil do veículo e sinais de risco, usando a FIPE de ${formatCurrency(precoFipe)} como referência.`
+      `O valor está relativamente alinhado com a FIPE, o que tende a indicar uma faixa de mercado mais previsível.`
     );
   }
 
-  if (qtdDonos >= 4) {
+  if (typeof km === "number" && km > 0) {
     partes.push(
-      `A quantidade de proprietários é alta, o que pode indicar revendas frequentes e menor previsibilidade sobre o histórico de uso.`
-    );
-  } else if (qtdDonos >= 2) {
-    partes.push(
-      `O veículo já passou por mais de um proprietário, o que merece atenção adicional na checagem documental e mecânica.`
-    );
-  } else {
-    partes.push(
-      `A baixa quantidade de proprietários tende a favorecer a rastreabilidade do histórico do veículo.`
-    );
-  }
-
-  if (possuiHistoricoRestritivo) {
-    partes.push(
-      `Foi identificado histórico relevante ou restritivo, então a recomendação é não fechar negócio sem vistoria cautelar, laudo completo e conferência documental.`
-    );
-  } else {
-    partes.push(
-      `Não houve sinal restritivo relevante neste retorno inicial, o que melhora a percepção de segurança, embora não substitua uma vistoria profissional.`
+      `A quilometragem informada foi de ${km.toLocaleString("pt-BR")} km, e ela precisa ser interpretada junto com o ano e o estado de conservação.`
     );
   }
 
   partes.push(
-    `Antes de comprar, vale conferir estrutura, pintura, alinhamento, documentação, procedência e fazer vistoria cautelar.`
+    `Antes de comprar, vale conferir documentação, sinais de colisão, desgaste mecânico, pneus, pintura e, se possível, fazer vistoria cautelar.`
   );
 
   return partes.join(" ");
+}
+
+export async function generateVehicleNarrative({
+  marca,
+  modelo,
+  ano,
+  preco,
+  precoFipe,
+  km,
+  percentualDiferenca,
+  score,
+  combustivel,
+}) {
+  if (!client) {
+    return buildFallbackAnalysis({
+      marca,
+      modelo,
+      ano,
+      preco,
+      precoFipe,
+      km,
+      percentualDiferenca,
+      score,
+    });
+  }
+
+  const prompt = `
+Você é um especialista em compra de veículos usados no Brasil.
+
+Analise os dados abaixo e escreva uma avaliação curta, clara e útil para um comprador comum.
+
+Dados do veículo:
+- Marca: ${marca}
+- Modelo: ${modelo}
+- Ano: ${ano}
+- Combustível: ${combustivel || "Não informado"}
+- Preço do anúncio: ${formatCurrency(preco)}
+- Preço de referência FIPE: ${formatCurrency(precoFipe)}
+- Diferença percentual para FIPE: ${percentualDiferenca.toFixed(2)}%
+- Quilometragem: ${typeof km === "number" ? `${km.toLocaleString("pt-BR")} km` : "Não informada"}
+- Score calculado: ${score}/100 (${getScoreDisplay(score)})
+
+Escreva em português do Brasil.
+
+Objetivo:
+- Dizer se parece uma boa compra, compra de atenção, ou compra arriscada
+- Explicar o que chama atenção no preço
+- Explicar riscos possíveis
+- Dizer o que a pessoa deve verificar antes de fechar negócio
+
+Regras:
+- Seja objetivo
+- Não invente histórico que não foi informado
+- Não use markdown
+- Responda em no máximo 6 frases
+`.trim();
+
+  try {
+    const response = await client.chat.completions.create({
+      model: "gemini-3-flash-preview",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+    });
+
+    const text = response.choices?.[0]?.message?.content?.trim();
+
+    if (!text) {
+      throw new Error("Resposta vazia da IA.");
+    }
+
+    return text;
+  } catch (error) {
+    console.error("[ai.service] Falha ao gerar análise com Gemini:", error.message);
+
+    return buildFallbackAnalysis({
+      marca,
+      modelo,
+      ano,
+      preco,
+      precoFipe,
+      km,
+      percentualDiferenca,
+      score,
+    });
+  }
 }

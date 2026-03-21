@@ -1,34 +1,25 @@
-export function calculateScore({
-  precoFipe,
-  precoAnuncio,
-  anoModelo,
-  qtdDonos,
-  possuiHistoricoRestritivo,
-}) {
+
+export function calculateAdvancedScore({ preco, precoFipe, ano, km }) {
   let score = 100;
 
-  let percentualDiferenca = null;
+  const percentualDiferenca = ((preco - precoFipe) / precoFipe) * 100;
 
-  if (typeof precoAnuncio === "number" && precoFipe > 0) {
-    percentualDiferenca = ((precoAnuncio - precoFipe) / precoFipe) * 100;
-
-    if (percentualDiferenca <= -20) score -= 25;
-    else if (percentualDiferenca <= -10) score -= 15;
-    else if (percentualDiferenca <= -5) score -= 8;
-    else if (percentualDiferenca >= 10) score -= 10;
-  }
-
-  if (qtdDonos >= 4) score -= 15;
-  else if (qtdDonos >= 2) score -= 8;
+  if (percentualDiferenca <= -20) score -= 30;
+  else if (percentualDiferenca <= -10) score -= 20;
+  else if (percentualDiferenca <= -5) score -= 10;
+  else if (percentualDiferenca >= 15) score -= 10;
 
   const currentYear = new Date().getFullYear();
-  const idadeVeiculo = currentYear - anoModelo;
+  const idade = currentYear - ano;
 
-  if (idadeVeiculo > 10) score -= 10;
-  else if (idadeVeiculo > 5) score -= 5;
+  if (idade > 10) score -= 10;
+  else if (idade > 5) score -= 5;
 
-  if (possuiHistoricoRestritivo) {
-    score -= 20;
+  if (typeof km === "number" && km > 0) {
+    const kmEsperado = idade * 12000;
+
+    if (km > kmEsperado * 1.5) score -= 15;
+    else if (km < kmEsperado * 0.5) score -= 10;
   }
 
   score = Math.max(0, Math.min(100, score));
@@ -47,7 +38,7 @@ export function getScoreLabel(score) {
 }
 
 export function getScoreDisplay(score) {
-  if (score >= 80) return "?? Seguro";
-  if (score >= 60) return "?? Aten��o";
-  return "?? Alto risco";
+  if (score >= 80) return "🟢 Seguro";
+  if (score >= 60) return "🟡 Atenção";
+  return "🔴 Alto risco";
 }

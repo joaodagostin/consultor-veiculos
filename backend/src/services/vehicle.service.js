@@ -1,97 +1,69 @@
-import { getCache, setCache } from "../utils/cache.js";
-import { normalizePlate, formatCurrency } from "../utils/format.js";
-import { calculateScore, getScoreDisplay } from "../utils/score.js";
+import { formatCurrency } from "../utils/format.js";
+import { calculateAdvancedScore, getScoreDisplay } from "../utils/score.js";
 import { generateVehicleNarrative } from "./ai.service.js";
+import { getFipeReferenceValueByCodes } from "./fipe.service.js";
 
-async function fetchVehicleDataMock(placa) {
-  const fakeDatabase = {
-    ABC1234: {
-      placa: "ABC1234",
-      marca: "Toyota",
-      modelo: "Corolla XEI",
-      anoModelo: 2020,
-      precoFipe: 98500,
-      qtdDonos: 2,
-      possuiHistoricoRestritivo: false,
-    },
-    DEF5678: {
-      placa: "DEF5678",
-      marca: "Honda",
-      modelo: "Civic EX",
-      anoModelo: 2018,
-      precoFipe: 89900,
-      qtdDonos: 4,
-      possuiHistoricoRestritivo: true,
-    },
-  };
-
-  const found = fakeDatabase[placa];
-  if (found) return found;
-
-  return {
-    placa,
-    marca: "Volkswagen",
-    modelo: "Gol 1.6",
-    anoModelo: 2017,
-    precoFipe: 46500,
-    qtdDonos: 3,
-    possuiHistoricoRestritivo: false,
-  };
+function extractAnoFromYearCode(yearCode) {
+  const yearPart = String(yearCode).split("-")[0];
+  return Number(yearPart);
 }
 
-export async function getVehicleAnalysis({ placa, precoAnuncio }) {
-  const normalizedPlate = normalizePlate(placa);
+export async function getVehicleAnalysis({
+  brandCode,
+  modelCode,
+  yearCode,
+  preco,
+  km,
+}) {
+  const { valor: precoFipe, dadosBrutos } = await getFipeReferenceValueByCodes({
+    brandCode,
+    modelCode,
+    yearCode,
+  });
 
-  const cacheKey = `${normalizedPlate}:${precoAnuncio ?? "sem-preco"}`;
-  const cached = getCache(cacheKey);
+  const marca = dadosBrutos.brand;
+  const modelo = dadosBrutos.model;
+  const ano = dadosBrutos.modelYear || extractAnoFromYearCode(yearCode);
+  const combustivel = dadosBrutos.fuel;
 
-  if (cached) {
-    return {
-      ...cached,
-      cache: true,
-    };
-  }
-
-  const vehicleData = await fetchVehicleDataMock(normalizedPlate);
-
-  const scoreData = calculateScore({
-    precoFipe: vehicleData.precoFipe,
-    precoAnuncio,
-    anoModelo: vehicleData.anoModelo,
-    qtdDonos: vehicleData.qtdDonos,
-    possuiHistoricoRestritivo: vehicleData.possuiHistoricoRestritivo,
+  const scoreData = calculateAdvancedScore({
+    preco,
+    precoFipe,
+    ano,
+    km,
   });
 
   const analise = await generateVehicleNarrative({
-    placa: vehicleData.placa,
-    marca: vehicleData.marca,
-    modelo: vehicleData.modelo,
-    anoModelo: vehicleData.anoModelo,
-    precoFipe: vehicleData.precoFipe,
-    precoAnuncio,
-    qtdDonos: vehicleData.qtdDonos,
-    possuiHistoricoRestritivo: vehicleData.possuiHistoricoRestritivo,
+    marca,
+    modelo,
+    ano,
+    preco,
+    precoFipe,
+    km,
     percentualDiferenca: scoreData.percentualDiferenca,
     score: scoreData.score,
+    combustivel,
   });
 
-  const response = {
-    placa: vehicleData.placa,
-    marca: vehicleData.marca,
-    modelo: vehicleData.modelo,
-    anoModelo: vehicleData.anoModelo,
+  return {
+    veiculo: {
+      marca,
+      modelo,
+      ano,
+      km,
+      combustivel,
+      codigoFipe: dadosBrutos.fipeCode,
+      mesReferencia: dadosBrutos.referenceMonth,
+    },
     fipe: {
-      valor: vehicleData.precoFipe,
-      valorFormatado: formatCurrency(vehicleData.precoFipe),
+      valor: precoFipe,
+      valorFormatado: formatCurrency(precoFipe),
     },
     anuncio: {
-      valor: precoAnuncio ?? null,
-      valorFormatado:
-        typeof precoAnuncio === "number" ? formatCurrency(precoAnuncio) : null,
+      valor: preco,
+      valorFormatado: formatCurrency(preco),
     },
-    indicadores: {
-      qtdDonos: vehicleData.qtdDonos,
-      possuiHistoricoRestritivo: vehicleData.possuiHistoricoRestritivo,
+    comparativo: {
       percentualDiferenca: scoreData.percentualDiferenca,
     },
     score: {
@@ -100,10 +72,5 @@ export async function getVehicleAnalysis({ placa, precoAnuncio }) {
       display: getScoreDisplay(scoreData.score),
     },
     analise,
-    cache: false,
   };
-
-  setCache(cacheKey, response);
-
-  return response;
 }

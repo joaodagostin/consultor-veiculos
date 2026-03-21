@@ -2,26 +2,36 @@ import { getVehicleAnalysis } from "../services/vehicle.service.js";
 
 export async function consultarVeiculo(req, res, next) {
   try {
-    const { placa, precoAnuncio } = req.body;
+    const { brandCode, modelCode, yearCode, preco, km } = req.body;
 
-    if (!placa || typeof placa !== "string") {
+    if (!brandCode || !modelCode || !yearCode || !preco) {
       return res.status(400).json({
-        error: "O campo 'placa' é obrigatório.",
+        error: "Os campos brandCode, modelCode, yearCode e preco são obrigatórios.",
       });
     }
 
-    if (
-      precoAnuncio !== undefined &&
-      (typeof precoAnuncio !== "number" || Number.isNaN(precoAnuncio) || precoAnuncio < 0)
-    ) {
+    const precoNumero = Number(preco);
+    const kmNumero =
+      km !== undefined && km !== null && km !== "" ? Number(km) : null;
+
+    if (Number.isNaN(precoNumero) || precoNumero <= 0) {
       return res.status(400).json({
-        error: "O campo 'precoAnuncio' deve ser um número válido.",
+        error: "Preço inválido.",
+      });
+    }
+
+    if (kmNumero !== null && (Number.isNaN(kmNumero) || kmNumero < 0)) {
+      return res.status(400).json({
+        error: "KM inválida.",
       });
     }
 
     const result = await getVehicleAnalysis({
-      placa,
-      precoAnuncio,
+      brandCode,
+      modelCode,
+      yearCode,
+      preco: precoNumero,
+      km: kmNumero,
     });
 
     return res.status(200).json(result);
