@@ -207,7 +207,7 @@ export default function VehicleAnalysis() {
     async function carregarMarcas() {
       setLoadingMarcas(true);
       try {
-        const response = await fetch("http://localhost:3001/api/fipe/marcas");
+        const response = await fetch("/api/fipe/marcas");
         const data = await response.json();
 
         if (!response.ok) {
@@ -240,7 +240,7 @@ export default function VehicleAnalysis() {
 
       try {
         const response = await fetch(
-          `http://localhost:3001/api/fipe/modelos/${brandCode}`
+          `/api/fipe/modelos/${brandCode}`
         );
         const data = await response.json();
 
@@ -275,7 +275,7 @@ export default function VehicleAnalysis() {
 
       try {
         const response = await fetch(
-          `http://localhost:3001/api/fipe/anos/${brandCode}/${modelCode}`
+          `/api/fipe/anos/${brandCode}/${modelCode}`
         );
         const data = await response.json();
 
@@ -319,7 +319,7 @@ export default function VehicleAnalysis() {
         throw new Error("Informe uma quilometragem válida.");
       }
 
-      const response = await fetch("http://localhost:3001/api/consulta", {
+      const response = await fetch("/api/consulta", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
