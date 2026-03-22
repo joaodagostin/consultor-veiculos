@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+const API_BASE =
+  import.meta.env.VITE_API_URL || "";
+
 type FipeOption = {
   code: string;
   name: string;
@@ -207,7 +210,7 @@ export default function VehicleAnalysis() {
     async function carregarMarcas() {
       setLoadingMarcas(true);
       try {
-        const response = await fetch("/api/fipe/marcas");
+        const response = await fetch(`${API_BASE}/api/fipe/marcas`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -240,7 +243,7 @@ export default function VehicleAnalysis() {
 
       try {
         const response = await fetch(
-          `/api/fipe/modelos/${brandCode}`
+          `${API_BASE}/api/fipe/modelos/${brandCode}`
         );
         const data = await response.json();
 
@@ -275,7 +278,7 @@ export default function VehicleAnalysis() {
 
       try {
         const response = await fetch(
-          `/api/fipe/anos/${brandCode}/${modelCode}`
+          `${API_BASE}/api/fipe/anos/${brandCode}/${modelCode}`
         );
         const data = await response.json();
 
@@ -319,7 +322,7 @@ export default function VehicleAnalysis() {
         throw new Error("Informe uma quilometragem válida.");
       }
 
-      const response = await fetch("/api/consulta", {
+      const response = await fetch(`${API_BASE}/api/consulta`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
