@@ -3,7 +3,7 @@
 
 Aplicação web desenvolvida em **React + TypeScript** para consulta de valores da **Tabela FIPE**, permitindo selecionar tipo de veículo, marca, modelo e ano e retornando o preço de referência atualizado.
 
-O projeto consome a **API pública da FIPE** e apresenta os dados em uma interface moderna utilizando **TailwindCSS**.
+O projeto consome a **API pública da FIPE** e apresenta  os dados em uma interface moderna utilizando **TailwindCSS**.
 
 ---
 
