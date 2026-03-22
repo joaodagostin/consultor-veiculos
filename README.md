@@ -1,173 +1,89 @@
+# 🚗 Consultor de Veículos
 
-# 🚗 FIPE Vehicle Lookup
+Um sistema inteligente para análise de compra de veículos, baseado em
+dados informados manualmente pelo usuário, com comparação automática com
+a tabela FIPE e geração de recomendações estratégicas.
 
-Aplicação web desenvolvida em **React + TypeScript** para consulta de valores da **Tabela FIPE**, permitindo selecionar tipo de veículo, marca, modelo e ano e retornando o preço de referência atualizado.
+------------------------------------------------------------------------
 
-O projeto consome a **API pública da FIPE** e apresenta  os dados em uma interface moderna utilizando **TailwindCSS**.
+## 🧠 Sobre o Projeto
 
----
+O **Consultor de Veículos** foi desenvolvido com o objetivo de auxiliar
+usuários na tomada de decisão na compra de veículos, oferecendo:
 
-## 📊 Funcionalidades
+-   Comparação de preço com a FIPE
+-   Análise de custo-benefício
+-   Score de avaliação do veículo
+-   Alertas inteligentes
+-   Sugestão de negociação
+-   Interpretação automática via IA
 
-- Consulta de veículos por:
-  - 🚙 Carros
-  - 🏍️ Motos
-  - 🚛 Caminhões
-- Carregamento dinâmico de:
-  - Marcas
-  - Modelos
-  - Anos
-- Consulta do valor FIPE em tempo real
-- Exibição de:
-  - Marca
-  - Modelo
-  - Ano
-  - Combustível
-  - Mês de referência
-  - Código FIPE
-  - Valor do veículo
-- Exibição do JSON retornado pela API para fins de debug
-- Interface responsiva e moderna
+Diferente de soluções baseadas em scraping (instáveis e sujeitas a
+bloqueios), o sistema utiliza **entrada manual estruturada +
+inteligência de análise**, garantindo confiabilidade e consistência.
 
----
+------------------------------------------------------------------------
 
-## 🖥️ Tecnologias utilizadas
+## ⚙️ Tecnologias Utilizadas
 
-- React
-- TypeScript
-- Vite
-- TailwindCSS
-- Lucide React (ícones)
-- API FIPE
+### 🔹 Frontend
 
----
+-   React
+-   TypeScript
+-   Vite
 
-## 🌐 API utilizada
+### 🔹 Backend
 
-API pública de consulta da tabela FIPE:
+-   Node.js
+-   Express
+-   API FIPE
 
-```
-https://parallelum.com.br/fipe/api/v2
-```
+------------------------------------------------------------------------
 
-### Endpoint principal utilizado
+## 🚀 Funcionalidades
 
-```
-/{vehicleType}/brands/{brandId}/models/{modelId}/years/{yearId}
-```
+### 🔍 Consulta de Veículo
 
-### Exemplo de requisição
+-   Tipo, marca, modelo, ano
+-   Preço do anúncio
+-   Quilometragem
 
-```
-https://parallelum.com.br/fipe/api/v2/cars/brands/59/models/5940/years/2014-1
-```
+### 📊 Análise Inteligente
 
-### Exemplo de resposta
+-   💰 Preço FIPE
+-   📉 Diferença percentual
+-   🧠 Score
+-   ⚠️ Alertas
+-   📄 Análise textual
 
-```json
-{
-  "brand": "VW - VolksWagen",
-  "model": "Gol 1.0",
-  "modelYear": 2014,
-  "fuel": "Gasolina",
-  "price": "R$ 29.000,00",
-  "fipeCode": "005340-6",
-  "referenceMonth": "março de 2026"
-}
-```
+------------------------------------------------------------------------
 
----
+## ▶️ Como Rodar
 
-## 📦 Instalação
+### Backend
 
-Clone o repositório:
-
-```bash
-git clone https://github.com/joaodagostin/fipe-react.git
-```
-
-Entre na pasta do projeto:
-
-```bash
-cd fipe-react
-```
-
-Instale as dependências:
-
-```bash
+``` bash
+cd backend
 npm install
-```
-
----
-
-## ▶️ Executar o projeto
-
-Inicie o servidor de desenvolvimento:
-
-```bash
 npm run dev
 ```
 
-O projeto ficará disponível em:
+### Frontend
 
-```
-http://localhost:5173
-```
-
----
-
-## 📁 Estrutura do projeto
-
-```
-src/
- ├── App.tsx
- ├── main.tsx
- ├── index.css
- └── components
+``` bash
+cd frontend
+npm install
+npm run dev
 ```
 
-### Responsabilidades
-
-| Arquivo | Função |
-|--------|--------|
-| App.tsx | Lógica principal da aplicação |
-| main.tsx | Inicialização do React |
-| index.css | Estilos globais |
-| components | Componentes reutilizáveis |
-
----
-
-## 🔄 Fluxo da aplicação
-
-1. Usuário seleciona o **tipo de veículo**
-2. A aplicação carrega as **marcas disponíveis**
-3. Após selecionar a marca, carrega os **modelos**
-4. Após selecionar o modelo, carrega os **anos**
-5. Usuário clica em **Consultar**
-6. A aplicação consulta o endpoint final da API e exibe o resultado
-
----
-
-## 📚 Possíveis melhorias
-
-- Histórico de consultas
-- Exibir imagem real do veículo
-- Cache de consultas
-- Melhor responsividade mobile
-- Deploy em cloud
-- Integração com APIs automotivas mais completas
-
----
-
-## 👨‍💻 Autor
-
-**João Gabriel Rosso Dagostin**
-
-GitHub:  
-https://github.com/joaodagostin
-
----
+------------------------------------------------------------------------
 
 ## 📄 Licença
 
-Projeto desenvolvido para fins educacionais.
+MIT
+
+------------------------------------------------------------------------
+
+## 👨‍💻 Autor
+
+João Dagostin
